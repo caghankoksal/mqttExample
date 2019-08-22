@@ -12,17 +12,20 @@ import sys
 broker_address="broker.hivemq.com"
 
 client2=mqtt.Client(client_id="2022")  #Sender
-client2.connect(broker_address)
+client2.connect(broker_address) #Creates connection
+
+
+#Message types and acts according to them
 def case3(message):
-    print("Hello World")
+    print("Hello World from case3")
     msgType=int.from_bytes(message[1],byteorder=sys.byteorder)
     print(msgType)
 def case0(message):
-    print("deneme 0")
+    print("case0")
 def case1(message):
-    print("deneme1")
+    print("case1")
 def case2(message):
-    print("deneme2")
+    print("case2")
 
 def Switcher(message):
     msgType=int.from_bytes(message[1],byteorder=sys.byteorder)
@@ -32,23 +35,24 @@ def Switcher(message):
             2:case2,
             3:case3
             }
+
     func=options.get(message,"nothing")    
     print(msgType)
     options[msgType](message)
 
 def on_connect(client,userdata,flags,rc):
-    client2.subscribe("okumaYazma")
+    client2.subscribe("okumaYazma") #Subscribes to topics and starts to listening the topic
     
 def on_log(client,userdata,level,buf):
     print("log:",buf)
     
 def on_message(client,userdata,message):
     print("message received",str(message.payload)) 
-    takenData=list(message.payload)
+    takenData=list(message.payload) #converts data to the List
     #print(takenData)
-    valid_message=checkValidence(takenData)
+    valid_message=checkValidence(takenData)  #checks validance
     print(type(valid_message))
-    client2.publish("okumaYazmaCheck",message.payload)
+    client2.publish("okumaYazmaCheck",message.payload) # publish message
     Switcher(valid_message)
     
 def on_publish(client,userdata,result):
@@ -56,10 +60,10 @@ def on_publish(client,userdata,result):
     pass
 
 def SumElementsArray (array,min,max_len):
-    Sums = 0    
+    sums = 0    
     for item in range(min,max_len):
-        Sums+=int.from_bytes(array[item],byteorder=sys.byteorder)
-    return Sums
+        sums+=int.from_bytes(array[item],byteorder=sys.byteorder)
+    return sums
     
 def checkValidence(takenData):
     hexArray=bytearray(takenData)
@@ -73,9 +77,9 @@ def checkValidence(takenData):
                 message=L[index:index+2+calc_length+1+1+1+1]#§tart at index then goes to the end of the message
                 cs=int.from_bytes(L[4+calc_length],byteorder=sys.byteorder)#check sum
                 sumElement=SumElementsArray(message,4,4+calc_length) #sum of datas
-                msgType=int.from_bytes(message[1],byteorder=sys.byteorder) #if its message, message[1] should be msgType
+                msgType=int.from_bytes(message[1],byteorder=sys.byteorder) #if its real message, message[1] should be msgType
                 sumRHS=msgType+sumElement+calc_length #sumRHS is sum of msgType+length+data
-                if cs==sumRHS:#checks whether its real message or not 
+                if cs==sumRHS:#checks whether its real message or not by comparing with cs which is CheckSum
                     print("Its valid")
                     print("index is: ",index)
                     print(message)
@@ -85,6 +89,7 @@ def checkValidence(takenData):
                     print("LENGTH is",calc_length)
                     print("sum of Elements in data",sumElement)
                     return message
+
 #Subbacks
 client2.on_connect=on_connect
 client2.on_message=on_message
